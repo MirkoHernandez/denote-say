@@ -35,17 +35,17 @@ audio files.
 The following variables can be use for configuring denote-say.
 
 
-`denote-say-temp-directory`
+#### denote-say-temp-directory
 
 This is where text and audio files are stored. The default value is in
 the subdirectory denote-say of `user-emacs-directory`.
 
 
-`denote-say-tts-commands`
+#### denote-say-tts-commands
 
 The list of available tts commands. These commands create an audio
 file using a text file. The placeholders textfile and audiofile
-(and the enclosing < >) **must** be used when describing a command.
+(enclosed in < >) **must** be used when describing a command.
 
 ``` emacs-lisp
 (defvar denote-say-tts-commands
@@ -56,25 +56,25 @@ file using a text file. The placeholders textfile and audiofile
 ```
 
 
-`denote-say-tts-command`
+#### denote-say-tts-command
 
 This is the command used to create audio files. The value is a key of
 the `denote-say-tts-commands` alist.
 
 
-`denote-say-play-function`
+#### denote-say-play-function
 
 Function that plays the audio file. The default is `emms-play-file`.
 
 
-`denote-say-org-replacements`
+#### denote-say-org-replacements
 
 Is the list of replacements that are applied to denote files. The
 order of the replacements is important. Top entries are applied first.
 
 # Usage
 
-`denote-say-buffer`
+#### denote-say-buffer
 
 Creates a text file from the current buffer (using all the
 replacements form `denote-say-org-replacements`), then an audio file
@@ -82,12 +82,12 @@ using `denote-say-tts-command`, then it plays the audio file using
 `denote-say-play-function`.
 
 
-`denote-say-buffer-choose-tts`
+#### denote-say-buffer-choose-tts
 
 It does the same as `denote-say-buffer` but the tts command is
 selected from a prompt.
 
 
-`denote-say-set-tts-command`
+#### denote-say-set-tts-command
 
 Can be used to change the tts command.
