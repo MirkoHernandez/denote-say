@@ -204,14 +204,6 @@ file."
   (denote-say-buffer (denote-say-find-file)))
 
 ;;;###autoload
-(defun denote-say-find-note (&optional regexp)
-  (interactive)
-  (denote-say-buffer (denote-say-find-file)))
-
-
-
-
-;;;###autoload
 (defun denote-say-buffer-choose-tts (&optional file)
   "Choose a tts engine  from `denote-say-tts-commands' and then call
 `denote-say-buffer.'" 
@@ -220,5 +212,10 @@ file."
 	 (denote-say-tts-command (intern tts)))
     (when (alist-get denote-say-tts-command denote-say-tts-commands)
       (denote-say-buffer file))))
+
+;;;###autoload
+(defun denote-say-find-note-choose-tts (&optional regexp)
+  (interactive)
+  (denote-say-buffer-choose-tts (denote-say-find-file)))
 
 (provide 'denote-say)
