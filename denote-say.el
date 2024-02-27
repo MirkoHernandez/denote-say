@@ -138,7 +138,7 @@ current buffer after the replacements from `denote-say-org-replacements' are app
     (when (file-exists-p audiofile)
       (delete-file audiofile)
       (message "Overwriting %s" audiofile))
-    (call-process-shell-command command nil t)))
+    (call-process-shell-command command nil nil)))
 
 ;;;; Find denote note helpers
 (define-inline denote-say-pretty-format-filename (&optional file)
