@@ -19,7 +19,7 @@ denote-say provides functionality for two kinds of tasks.
 
 ## Manual
 
-denote-say is not available on any ELPA. To install manually download
+denote-say is not available on any ELPA. To install manually, download
 `denote-say.el`, then call M-x `package-install-file` on it.
 
 M-x `package-initialize` may be required to recognize the package
@@ -27,23 +27,25 @@ after installation (just once after installation).
 
 ## Requirements
 
-Denote 2.0.0 or above is required.
-Any tts engine that can create audio files.
+Denote 2.0.0 or above is required and any tts engine that can create
+audio files.
 
 # Configuration
 
 The following variables can be use for configuring denote-say.
+
 
 `denote-say-temp-directory`
 
 This is where text and audio files are stored. The default value is in
 the subdirectory denote-say of `user-emacs-directory`.
 
+
 `denote-say-tts-commands`
 
 The list of available tts commands. These commands create an audio
-file using a text file. The placeholders <textfile> and <audiofile>
-*must* be used when describing a command.
+file using a text file. The placeholders textfile and audiofile
+(and the enclosing < >) **must** be used when describing a command.
 
 ``` emacs-lisp
 (defvar denote-say-tts-commands
@@ -52,6 +54,7 @@ file using a text file. The placeholders <textfile> and <audiofile>
     (piper . "cat <textfile> | piper --model  en_US-lessac-medium.onnx --length_scale 1.4 --output_file <audiofile> ")
     (piper-fast . "cat <textfile> | piper --model en_US-lessac-medium.onnx --length_scale 0.8 --output_file <audiofile> ")))
 ```
+
 
 `denote-say-tts-command`
 
@@ -63,12 +66,13 @@ the `denote-say-tts-commands` alist.
 
 Function that plays the audio file. The default is `emms-play-file`.
 
+
 `denote-say-org-replacements`
 
 Is the list of replacements that are applied to denote files. The
 order of the replacements is important. Top entries are applied first.
 
-* Usage
+# Usage
 
 `denote-say-buffer`
 
@@ -80,7 +84,7 @@ using `denote-say-tts-command`, then it plays the audio file using
 
 `denote-say-buffer-choose-tts`
 
-The does the same as `denote-say-buffer` but the tts command is
+It does the same as `denote-say-buffer` but the tts command is
 selected from a prompt.
 
 
