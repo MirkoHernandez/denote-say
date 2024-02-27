@@ -158,7 +158,7 @@ a denote note path."
 	      (propertize keywords-as-string 'face 'font-lock-note-face)))
     ,file)))
 
-(defun denote-say-find-file (&optional regex)
+(defun denote-say-find-file ()
   "Find a note  from `denote-directory' using a  pretty printed list
 of notes." 
   (let* ((vertico-sort-function 'identity);; Prevents sorting by history
@@ -190,20 +190,33 @@ file."
 	 (audiofile (concat denote-say-temp-directory "/" basename ".wav")))
     (if current-prefix-arg
 	(denote-say-create-txt-file file t)
-      (denote-say-create-txt-file))
+      (denote-say-create-txt-file file))
     ;; TODO: Replace this with proper async code. 
     (let ((result (denote-say-create-audio textfile)))
       (if (equal 1 result)
-	  (message "Error in audio conversion %s" result)
+	  (error "Error in audio conversion." )
 	(funcall denote-say-play-function
 		 audiofile)))))
+
+;;;###autoload
+(defun denote-say-find-note (&optional regexp)
+  (interactive)
+  (denote-say-buffer (denote-say-find-file)))
+
+;;;###autoload
+(defun denote-say-find-note (&optional regexp)
+  (interactive)
+  (denote-say-buffer (denote-say-find-file)))
+
+
+
 
 ;;;###autoload
 (defun denote-say-buffer-choose-tts (&optional file)
   "Choose a tts engine  from `denote-say-tts-commands' and then call
 `denote-say-buffer.'" 
   (interactive)
-  (let* ((tts (completing-read "tts engine:"   denote-say-tts-commands))
+  (let* ((tts (completing-read "TTS command:"   denote-say-tts-commands))
 	 (denote-say-tts-command (intern tts)))
     (when (alist-get denote-say-tts-command denote-say-tts-commands)
       (denote-say-buffer file))))
