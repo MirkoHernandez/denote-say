@@ -4,22 +4,27 @@ denote-say provides convenient functions for integrating denote notes
 and any tts engine that can create audio files.
 
 denote-say provides functionality for two kinds of tasks.
-- Using denote notes, create text files that are suitable for use with
-   a tts engine. This primarily involves removing text that won't be
-   easily voiced by a tts engine, particularly in org-mode files.
-   Examples:
-   - Links
+
+1. Create text files that are suitable for use with a tts engine. This
+   primarily involves removing text that won't be easily voiced by a
+   tts engine, particularly in org-mode files.
+   Examples of problematic text:
+   - Links.
    - Source code blocks.
    - Text with emphasis markup.
    - Headers.
-- Create audio files from those text files (using a tts command) in a
+   
+   A text file can be created by using multiple denote files. Linked
+   files (denote links) and dblocks can be included.
+  
+2. Create audio files from those text files (using a tts command) in a
    temporary directory and then play them.
 
 # Installation
 
 ## Manual
 
-denote-say is not available on any ELPA. To install manually, download
+denote-say is not available on ELPA. To install manually, download
 `denote-say.el`, then call M-x `package-install-file` on it.
 
 M-x `package-initialize` may be required to recognize the package
@@ -55,16 +60,15 @@ file using a text file. The placeholders textfile and audiofile
     (piper-fast . "cat <textfile> | piper --model en_US-lessac-medium.onnx --length_scale 0.8 --output_file <audiofile> ")))
 ```
 
-
 #### denote-say-tts-command
 
 This is the command used to create audio files. The value is a key of
-the `denote-say-tts-commands` alist.
+the `denote-say-tts-commands` alist. The default value is `piper`.
 
 
 #### denote-say-play-function
 
-Function that plays the audio file. The default is `emms-play-file`.
+Function that plays the audio file. The default value is `emms-play-file`.
 
 
 #### denote-say-org-replacements
@@ -98,5 +102,3 @@ that file.
 #### denote-say-find-note-choose-tts 
 
 Like `denote-say-find-note` but allows you to choose the tts command.
-
-
