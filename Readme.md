@@ -81,13 +81,22 @@ replacements form `denote-say-org-replacements`), then an audio file
 using `denote-say-tts-command`, then it plays the audio file using
 `denote-say-play-function`.
 
-
 #### denote-say-buffer-choose-tts
 
 It does the same as `denote-say-buffer` but the tts command is
 selected from a prompt.
 
-
 #### denote-say-set-tts-command
 
 Can be used to change the tts command.
+
+#### denote-say-find-note
+
+Choose a note from `denote-directory` and call `denote-say-buffer` on
+that file.
+
+#### denote-say-find-note-choose-tts 
+
+Like `denote-say-find-note` but allows you to choose the tts command.
+
+
