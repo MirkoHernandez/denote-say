@@ -196,10 +196,10 @@ file."
       (denote-say-create-txt-file file))
     ;; TODO: Replace this with proper async code. 
     (let ((result (denote-say-create-audio textfile)))
-      (if (equal 1 result)
-	  (error "Error in audio conversion." )
-	(funcall denote-say-play-function
-		 audiofile)))))
+      (if (equal 0 result)
+	  (funcall denote-say-play-function
+		   audiofile)
+	(error "Error in audio conversion." )))))
 
 ;;;###autoload
 (defun denote-say-find-note (&optional regexp)
