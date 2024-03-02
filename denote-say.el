@@ -130,14 +130,17 @@ current buffer after the replacements from `denote-say-org-replacements' are app
 ;;;; TTS
 (defun denote-say-create-audio (textfile)
   "Creates an audio file out of TEXTFILE in `denote-say-temp-directory'.
-  It uses  the  command specified  in `denote-say-tts-command'"
+  It uses the command  specified in `denote-say-tts-command'. The
+  return is the exit status."
   (let* ((basename (file-name-base textfile ))
-	 (audiofile (concat  denote-say-temp-directory "/" basename ".wav"))
+	 (audiofile (concat  "'" denote-say-temp-directory "/" basename ".wav'"))
 	 (command   (denote-say-create-tts-command denote-say-tts-command
-						   textfile audiofile)))
-    (when (file-exists-p audiofile)
-      (delete-file audiofile)
-      (message "Overwriting %s" audiofile))
+						   (concat "'" textfile "'")  audiofile)))
+    (if (file-exists-p audiofile)
+	(progn	
+	  (delete-file audiofile)
+	  (message "Overwriting %s" audiofile))
+      (message "Creating %s" audiofile))
     (call-process-shell-command command nil nil)))
 
 ;;;; Find denote note helpers
