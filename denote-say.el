@@ -34,6 +34,7 @@
 ;;;; Configuration
 (defvar denote-say-encoding 'utf-8)
 (defvar denote-say-temp-directory (expand-file-name "denote-say" user-emacs-directory))
+
 (defvar denote-say-tts-command 'piper)
 (defvar denote-say-play-function 'emms-play-file)
 
@@ -42,6 +43,13 @@
     (festival-es . "text2wave -o <audiofile> -eval '(voice_el_diphone) <textfile>")
     (piper . "cat <textfile> | piper --model  en_US-lessac-medium.onnx --length_scale 1.4 --output_file <audiofile> ")
     (piper-fast . "cat <textfile> | piper --model en_US-lessac-medium.onnx --length_scale 0.8 --output_file <audiofile> ")))
+
+;;;; OCR commands
+(defvar denote-say-ocr-command 'tesseract)
+(defvar denote-say-ocr-images-directory (expand-file-name "ocr-images" denote-say-temp-directory))
+
+(defvar denote-say-ocr-commands
+  `((tesseract . "tesseract <imagefile> <textfile> -l eng")))
 
 ;; NOTE: some replacements involve an  added '.' character; this seems
 ;; to improve the rhythm of some sentences.
@@ -66,8 +74,8 @@
  path,the input to  the tts engine, AUDIOFILE is  the output name
  of the audio file."
   (let* ((str (alist-get command denote-say-tts-commands))
-	 (str (replace-regexp-in-string "<textfile>" textfile str)))
-    (replace-regexp-in-string "<audiofile>"  audiofile str)))
+	 (str (replace-regexp-in-string "<textfile>" (concat "'" textfile "'") str)))
+    (replace-regexp-in-string "<audiofile>"  (concat "'" audiofile "'") str)))
 
 ;;;; Text replacements
 ;; NOTE: it  would be faster  to iterate the  lines of the  buffer but
@@ -89,14 +97,18 @@
 						   acc))))))
     (rec replacements str ))) 
 
-(defun denote-say-transform (file)
-  "Return string corresponding to the contents of FILE after some replacements.
-The string is also encoded using `denote-say-encoding.'" 
+(defun denote-say-transform-text (text)
   (encode-coding-string
    (denote-say-org-replace
-    (get-string-from-file 
-     file) denote-say-org-replacements)
+    text 
+    denote-say-org-replacements)
    denote-say-encoding))
+
+(defun denote-say-transform (file)
+  "Return string corresponding to the contents of FILE after some replacements.
+The string is also encoded using `denote-say-encoding.'"
+  (denote-say-transform-text (get-string-from-file 
+     file)))
 
 (defun denote-say-transform-with-links (&optional file)
  "Transform FILE and appends  all the transformations corresponding
@@ -135,7 +147,7 @@ current buffer after the replacements from `denote-say-org-replacements' are app
   (let* ((basename (file-name-base textfile ))
 	 (audiofile (concat  "'" denote-say-temp-directory "/" basename ".wav'"))
 	 (command   (denote-say-create-tts-command denote-say-tts-command
-						   (concat "'" textfile "'")  audiofile)))
+						   textfile  audiofile)))
     (if (file-exists-p audiofile)
 	(progn	
 	  (delete-file audiofile)
@@ -171,13 +183,53 @@ of notes."
 	 (filename (cdr (assoc (completing-read "Note: " paths  nil t) paths))))
       filename))
 
+;;;; OCR commands
+(defun denote-say-create-ocr-command (command  textfile imagefile)
+  (let* ((str (alist-get command denote-say-ocr-commands))
+	 (str (replace-regexp-in-string "<textfile>" (concat "\"" textfile "\"") str)))
+    (replace-regexp-in-string "<imagefile>"  (concat "\"" imagefile "\"") str)))
+
+(defun denote-say-extract-pdf-image ()
+  (interactive)
+  (when (equal major-mode 'pdf-view-mode)
+    (let* ((basename (file-name-base (buffer-file-name)))
+	   (page (number-to-string
+		  (pdf-view-current-page)))
+	   (image-name (concat denote-say-ocr-images-directory "/" basename "_" page ".png" ) ))
+      (call-interactively  
+       'pdf-view-extract-region-image)
+      (switch-to-buffer "*PDF image*") 
+      (write-file image-name)
+      (kill-buffer (concat basename "_" page ".png"))
+    image-name)))
+
+(defun denote-say-pdf-ocr-page ()
+  (interactive)
+  (let* ((imagefile (denote-say-extract-pdf-image))
+	 (basename (file-name-base imagefile))
+	 (ocr-output (concat  denote-say-temp-directory "/" basename))
+	 (textfile (concat  denote-say-temp-directory "/" basename ".txt"))
+	 (audiofile (concat  denote-say-temp-directory "/" basename ".wav") )
+	 (ocr-command (denote-say-create-ocr-command denote-say-ocr-command ocr-output imagefile)))
+    (let ((result-ocr  (call-process-shell-command ocr-command nil nil)))
+      (if (equal 0 result-ocr)
+	  (let ((result (denote-say-create-audio textfile) ))
+	    (if (equal 0 result)
+		(funcall denote-say-play-function
+			 audiofile)
+	      (error "Error in audio conversion." )))
+	(error "Error in ocr conversion.")))))
+
 ;;;; Interactive functions
 ;;;###autoload
 (defun denote-say-set-tts-command ()
- "Set `denote-say-tts-command' using some value from the list `denote-say-tts-commands'" 
- (interactive)
+  "Set `denote-say-tts-command' using some value from the list `denote-say-tts-commands'" 
+  (interactive)
   (let* ((tts (completing-read "tts:"   denote-say-tts-commands)))
-	 (setq denote-say-tts-command (intern tts))))
+    (setq denote-say-tts-command (intern tts))))
+
+
+
 
 ;;;###autoload
 (defun denote-say-buffer (&optional file)
