@@ -38,6 +38,7 @@
 (defvar denote-say-tts-command 'piper)
 (defvar denote-say-play-function 'emms-play-file)
 (defvar denote-say-audio-creation-process nil)
+(defvar denote-say-ocr-process nil)
 
 (defvar denote-say-tts-commands
   `((festival . "text2wave -o <audiofile> <textfile>")
@@ -160,10 +161,19 @@ current buffer after the replacements from `denote-say-org-replacements' are app
     (let ((process (start-process-shell-command
 		    "tts-process" 
                     nil
-		    command 
-                    )))
+		    command)))
       (setq denote-say-audio-creation-process process) 
       process)))
+
+(defun denote-say-create-audio-and-play (textfile audiofile)
+  (let ((process (denote-say-create-audio textfile)))
+    (set-process-sentinel process
+			  (lambda (proc event )
+			    (cond ((eq (process-status proc) 'signal)
+				   (message "%s" "Stop audio conversion."))
+				  ((equal event "finished\n")
+				   (funcall denote-say-play-function
+					    audiofile)))))))
 
 ;;;; Find denote note helpers
 (define-inline denote-say-pretty-format-filename (&optional file)
@@ -221,14 +231,17 @@ of notes."
 	 (textfile (concat  denote-say-temp-directory "/" basename ".txt"))
 	 (audiofile (concat  denote-say-temp-directory "/" basename ".wav") )
 	 (ocr-command (denote-say-create-ocr-command denote-say-ocr-command ocr-output imagefile)))
-    (let ((result-ocr  (call-process-shell-command ocr-command nil nil)))
-      (if (equal 0 result-ocr)
-	  (let ((result (denote-say-create-audio textfile) ))
-	    (if (equal 0 result)
-		(funcall denote-say-play-function
-			 audiofile)
-	      (error "Error in audio conversion." )))
-	(error "Error in ocr conversion.")))))
+    (when denote-say-ocr-process
+      (delete-process denote-say-ocr-process))
+    (let ((process  (start-process-shell-command "ocr-process"  nil ocr-command)))
+      (setq denote-say-ocr-process process) 
+      (set-process-sentinel process
+			    (lambda (proc event )
+			      (cond ((eq (process-status proc) 'signal)
+				     (message "%s" "Stop OCR."))
+				    ((equal event "finished\n")
+				     (denote-say-create-audio-and-play textfile audiofile))
+				    (t (error "Error In OCR."))))))))
 
 ;;;; Interactive functions
 ;;;###autoload
@@ -253,14 +266,7 @@ file."
     (if current-prefix-arg
 	(denote-say-create-txt-file file t)
       (denote-say-create-txt-file file))
-    (let ((process (denote-say-create-audio textfile)))
-      (set-process-sentinel process
-			    (lambda (proc event )
-			      (cond ((eq (process-status proc) 'signal)
-				     (message "%s" "Stop audio conversion."))
-				    ((equal event "finished\n")
-				     (funcall denote-say-play-function
-					      audiofile))))))))
+   (denote-say-create-audio-and-play textfile audiofile)))
 
 ;;;###autoload
 (defun denote-say-find-note (&optional regexp)
