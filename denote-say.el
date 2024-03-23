@@ -37,6 +37,7 @@
 
 (defvar denote-say-tts-command 'piper)
 (defvar denote-say-play-function 'emms-play-file)
+(defvar denote-say-audio-creation-process nil)
 
 (defvar denote-say-tts-commands
   `((festival . "text2wave -o <audiofile> <textfile>")
@@ -74,8 +75,9 @@
  path,the input to  the tts engine, AUDIOFILE is  the output name
  of the audio file."
   (let* ((str (alist-get command denote-say-tts-commands))
-	 (str (replace-regexp-in-string "<textfile>" (concat "'" textfile "'") str)))
-    (replace-regexp-in-string "<audiofile>"  (concat "'" audiofile "'") str)))
+	 (str (replace-regexp-in-string "<textfile>" (concat "\"" textfile "\"") str))
+	 (str (replace-regexp-in-string "<audiofile>"  (concat "\"" audiofile "\"") str)))
+   str))
 
 ;;;; Text replacements
 ;; NOTE: it  would be faster  to iterate the  lines of the  buffer but
@@ -142,18 +144,26 @@ current buffer after the replacements from `denote-say-org-replacements' are app
 ;;;; TTS
 (defun denote-say-create-audio (textfile)
   "Creates an audio file out of TEXTFILE in `denote-say-temp-directory'.
-  It uses the command  specified in `denote-say-tts-command'. The
-  return is the exit status."
+  It uses the command  specified in `denote-say-tts-command'.
+  Return the audio converting process."
   (let* ((basename (file-name-base textfile ))
-	 (audiofile (concat  "'" denote-say-temp-directory "/" basename ".wav'"))
+	 (audiofile (concat   denote-say-temp-directory "/" basename ".wav"))
 	 (command   (denote-say-create-tts-command denote-say-tts-command
 						   textfile  audiofile)))
+    (when denote-say-audio-creation-process 
+      (delete-process denote-say-audio-creation-process))
     (if (file-exists-p audiofile)
 	(progn	
 	  (delete-file audiofile)
 	  (message "Overwriting %s" audiofile))
       (message "Creating %s" audiofile))
-    (call-process-shell-command command nil nil)))
+    (let ((process (start-process-shell-command
+		    "tts-process" 
+                    nil
+		    command 
+                    )))
+      (setq denote-say-audio-creation-process process) 
+      process)))
 
 ;;;; Find denote note helpers
 (define-inline denote-say-pretty-format-filename (&optional file)
@@ -228,9 +238,6 @@ of notes."
   (let* ((tts (completing-read "tts:"   denote-say-tts-commands)))
     (setq denote-say-tts-command (intern tts))))
 
-
-
-
 ;;;###autoload
 (defun denote-say-buffer (&optional file)
   "Create and play an audio file from FILE. The files are created in
@@ -246,12 +253,14 @@ file."
     (if current-prefix-arg
 	(denote-say-create-txt-file file t)
       (denote-say-create-txt-file file))
-    ;; TODO: Replace this with proper async code. 
-    (let ((result (denote-say-create-audio textfile)))
-      (if (equal 0 result)
-	  (funcall denote-say-play-function
-		   audiofile)
-	(error "Error in audio conversion." )))))
+    (let ((process (denote-say-create-audio textfile)))
+      (set-process-sentinel process
+			    (lambda (proc event )
+			      (cond ((eq (process-status proc) 'signal)
+				     (message "%s" "Stop audio conversion."))
+				    ((equal event "finished\n")
+				     (funcall denote-say-play-function
+					      audiofile))))))))
 
 ;;;###autoload
 (defun denote-say-find-note (&optional regexp)
