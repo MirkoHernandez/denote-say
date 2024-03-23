@@ -1,7 +1,7 @@
 # denote-say
 
-denote-say provides convenient functions for integrating denote notes
-and any tts engine that can create audio files.
+denote-say provides functions for integrating denote notes and any tts
+engine that can create audio files.
 
 denote-say provides functionality for two kinds of tasks.
 
@@ -14,8 +14,8 @@ denote-say provides functionality for two kinds of tasks.
    - Text with emphasis markup.
    - Headers.
    
-   A text file can be created by using multiple denote files. Linked
-   files (denote links) and dblocks can be included.
+   A text file can be created by combining multiple denote files
+   (files from denote links and dblock links).
   
 2. Create audio files from those text files (using a tts command) in a
    temporary directory and then play them.
@@ -38,7 +38,6 @@ audio files.
 # Configuration
 
 The following variables can be use for configuring denote-say.
-
 
 #### denote-say-temp-directory
 
@@ -74,7 +73,27 @@ Function that plays the audio file. The default value is `emms-play-file`.
 #### denote-say-org-replacements
 
 Is the list of replacements that are applied to denote files. The
-order of the replacements is important. Top entries are applied first.
+order of the replacements is important; top entries are applied first.
+
+Some replacements involve adding a '.' character; the output sounds
+better in my opinion.
+
+``` emacs-lisp
+(defvar denote-say-org-replacements
+  `(("^#[+]title: *\\(.*\\)" .                    "\\1." )
+    ("\\(^#[+]date:.*\\|^#[+]filetags: *\\|^#[+]identifier:.*\\)" . "")
+    ("^#[+]filetags: *:\\(.*\\):" . "Keywords. \\1.")
+    (org-babel-src-block-regexp . "Source Code. \\2")
+    (org-block-regexp . "D Block Links. \\4.")
+    (org-heading-regexp . "\\2.")
+    (org-any-link-re . "\\3.")
+    (org-emph-re  . "\\4")
+    (org-verbatim-re  . " \\4 ")
+    (org-target-regexp  . "\\1")
+    ("\""  . "")
+    ("\\(<<\\|>>\\)"  . "")
+    ("\\(;\\|:\\)"  . ".")))
+``` 
 
 # Usage
 
