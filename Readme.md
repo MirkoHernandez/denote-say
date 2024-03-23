@@ -17,7 +17,7 @@ denote-say provides functionality for two kinds of tasks.
    A text file can be created by combining multiple denote files
    (files from denote links and dblock links).
   
-2. Create audio files from those text files (using a tts command) in a
+2. Create audio files from those text files (using a tts engine) in a
    temporary directory and then play them.
 
 # Installation
@@ -64,12 +64,6 @@ file using a text file. The placeholders textfile and audiofile
 This is the command used to create audio files. The value is a key of
 the `denote-say-tts-commands` alist. The default value is `piper`.
 
-
-#### denote-say-play-function
-
-Function that plays the audio file. The default value is `emms-play-file`.
-
-
 #### denote-say-org-replacements
 
 Is the list of replacements that are applied to denote files. The
@@ -95,6 +89,26 @@ better in my opinion.
     ("\\(;\\|:\\)"  . ".")))
 ``` 
 
+#### denote-say-play-function
+
+The function used for playing audio files. The default value is
+`emms-play-file`.
+
+#### denote-say-ocr-commands
+
+The list of available OCR commands.
+
+``` emacs-lisp
+(defvar denote-say-ocr-commands
+  `((tesseract . "tesseract <imagefile> <textfile> -l eng")
+	(tesseract-spa . "tesseract <imagefile> <textfile> -l spa")))
+```
+
+#### denote-say-ocr-command
+
+This is the command used for OCR. The value must be a key of the
+`denote-say-ocr-commands` alist. The default value is `tesseract`.
+
 # Usage
 
 #### denote-say-buffer
@@ -111,7 +125,7 @@ selected from a prompt.
 
 #### denote-say-set-tts-command
 
-Can be used to change the tts command.
+Can be used to change the default tts command.
 
 #### denote-say-find-note
 
@@ -121,3 +135,14 @@ that file.
 #### denote-say-find-note-choose-tts 
 
 Like `denote-say-find-note` but allows you to choose the tts command.
+
+## PDF commands
+
+pdf-tools and an ocr program is required for the following commands.
+
+### denote-say-pdf-ocr-page
+
+Use an OCR command on the current PDF page, and then play the
+resulting text file.
+
+
